@@ -6,6 +6,7 @@ import asyncio
 import logging
 import json
 from typing import List, Dict
+import os
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -17,6 +18,7 @@ intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 IMGUR_CLIENT_ID = ''
+API_NINJAS_KEY = ''  # Replace with your actual API key
 headers = {'Authorization': f'Client-ID {IMGUR_CLIENT_ID}'}
 
 # Persistent storage
@@ -154,6 +156,109 @@ async def get_climate_change_memes() -> List[str]:
 
 memes = asyncio.run(get_climate_change_memes())
 
+async def get_ip_info(ip_addr: str) -> str:
+    """Fetch IP information using the Ninja API."""
+    url = f'https://api.api-ninjas.com/v1/iplookup?address={ip_addr}'
+    headers = {'X-Api-Key': API_NINJAS_KEY}
+    
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers) as response:
+            if response.status == 200:
+                data = await response.json()
+                # Format the response data nicely
+                location_info = (
+                    f"IP Address: {data.get('ip')}\n"
+                    f"Country-Code: {data.get('country_code')}\n"
+                    f"Country: {data.get('country')}\n"
+                    f"Region-Code: {data.get('region_code')}\n"
+                    f"Region: {data.get('region')}\n"
+                    f"Timezone: {data.get('timezone')}\n"
+                )
+                return location_info
+            else:
+                return f"Error: {response.status} - {response.reason}"
+
+@bot.command(name='ip')
+async def ip_lookup(ctx: commands.Context, ip_addr: str):
+    """Looks up geographic and network info for a given IP address."""
+    result = await get_ip_info(ip_addr)
+    await ctx.send(f"IP Lookup Result:\n{result}")
+
+async def generate_password(length: int) -> str:
+    """Generates a password of the specified length using the Ninja API."""
+    url = f'https://api.api-ninjas.com/v1/passwordgenerator?length={length}'
+    headers = {'X-Api-Key': API_NINJAS_KEY}
+    
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers) as response:
+            if response.status == 200:
+                data = await response.json()
+                return data.get('random_password', 'No password generated.')
+            else:
+                return f"Error: {response.status} - {response.reason}"
+
+@bot.command(name='password')
+async def password_generator(ctx: commands.Context, length: int):
+    """Generates a password of the specified length using the Ninja API."""
+    if length < 1 or length > 128:  # Validate length
+        await ctx.send("Please enter a length between 1 and 128.")
+        return
+
+    password = await generate_password(length)
+    await ctx.send(f"Generated Password: `{password}`")
+
+async def get_hobby(category: str = 'general') -> str:
+    """Fetches a random hobby from the Ninja API."""
+    url = f'https://api.api-ninjas.com/v1/hobbies?category={category}'
+    headers = {'X-Api-Key': API_NINJAS_KEY}
+    
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers) as response:
+            if response.status == 200:
+                data = await response.json()
+                if data:
+                    hobby = random.choice(data).get('hobby', 'No hobby found.')
+                    return hobby
+                else:
+                    return "No hobbies found."
+            else:
+                return f"Error: {response.status} - {response.reason}"
+
+@bot.command(name='hobby')
+async def hobby(ctx: commands.Context, category: str = 'general'):
+    """Fetches a random hobby from the Ninja API."""
+    hobby = await get_hobby(category)
+    await ctx.send(f"Here's a hobby you might enjoy: {hobby}")
+
+async def get_random_facts(limit: int = 3) -> List[str]:
+    """Fetch random facts using the Ninja API."""
+    url = f'https://api.api-ninjas.com/v1/facts?limit={limit}'
+    headers = {'X-Api-Key': API_NINJAS_KEY}
+    
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers) as response:
+            if response.status == 200:
+                data = await response.json()
+                return [fact['fact'] for fact in data]
+            else:
+                logger.error(f"Error fetching facts: {response.status} - {response.reason}")
+                return []
+            
+@bot.command(name='fact')
+@commands.cooldown(1, 5, commands.BucketType.user)
+async def fact(ctx: commands.Context, limit: int = 3):
+    """Fetches random facts using the Ninja API and sends them to the channel."""
+    if limit < 1 or limit > 10:  # Validate limit
+        await ctx.send("Please enter a limit between 1 and 10.")
+        return
+
+    facts = await get_random_facts(limit)
+    if facts:
+        for fact in facts:
+            await ctx.send(f"📚 **Fact**: {fact}")
+    else:
+        await ctx.send("Sorry, I couldn't retrieve any facts right now.")
+
 @bot.event
 async def on_ready():
     logger.info(f'Logged in as {bot.user}')
@@ -176,7 +281,7 @@ async def meme(ctx: commands.Context, category: str = None):
         meme = random.choice(meme_list)
         await ctx.send(meme)
     else:
-        await ctx.send("Bu kategoride meme bulunmuyor.")
+        await ctx.send("There are no memes in this category.")
 
 @bot.command(name='addmeme')
 @commands.cooldown(1, 10, commands.BucketType.user)
@@ -184,11 +289,11 @@ async def add_meme(ctx: commands.Context, category: str, *, meme_url: str):
     if category in categories:
         if meme_url.startswith('http'):
             categories[category].append(meme_url)
-            await ctx.send(f"{category} kategorisine meme eklendi!")
+            await ctx.send(f"{category} Meme added to category!")
         else:
-            await ctx.send("Lütfen geçerli bir URL gönderin.")
+            await ctx.send("Please submit a valid URL.")
     else:
-        await ctx.send("Geçersiz kategori.")
+        await ctx.send("Invalid category.")
 
 @bot.command(name='submitmeme')
 @commands.cooldown(1, 10, commands.BucketType.user)
@@ -200,18 +305,18 @@ async def submit_meme(ctx: commands.Context, *, meme_url: str):
         user_memes[user_id].append(meme_url)
         votes[meme_url] = 0
         save_data({'user_memes': user_memes, 'votes': votes})
-        await ctx.send("Meme gönderildi ve oylamaya sunuldu!")
+        await ctx.send("Meme submitted and put to vote!")
     else:
-        await ctx.send("Lütfen geçerli bir URL gönderin.")
+        await ctx.send("Please submit a valid URL.")
 
 @bot.command(name='my_memes')
 async def my_memes(ctx: commands.Context):
     user_id = ctx.author.id
     if user_id in user_memes and user_memes[user_id]:
         memes_list = '\n'.join(user_memes[user_id])
-        await ctx.send(f"Senin gönderdiğin memeler:\n{memes_list}")
+        await ctx.send(f"Memes you sent:\n{memes_list}")
     else:
-        await ctx.send("Henüz gönderilmiş meme bulunmuyor.")
+        await ctx.send("There are no memes submitted yet.")
 
 @bot.command(name='vote')
 async def vote(ctx: commands.Context, meme: str):
@@ -222,24 +327,24 @@ async def vote(ctx: commands.Context, meme: str):
             meme_url = user_memes_list[meme_id]
             votes[meme_url] += 1
             save_data({'user_memes': user_memes, 'votes': votes})
-            await ctx.send(f"Meme {meme_id} için oy verdiniz!")
+            await ctx.send(f"Meme {meme_id} You voted for!")
         else:
-            await ctx.send("Geçersiz meme ID'si.")
+            await ctx.send("Invalid meme ID.")
     except ValueError:
-        await ctx.send("Geçersiz format: Lütfen bir meme ID'si girin.")
+        await ctx.send("Invalid format: Please enter a meme ID.")
 
 @bot.command(name='topmeme')
 async def top_meme(ctx: commands.Context):
     if votes:
         top_meme_url = max(votes, key=votes.get)
-        await ctx.send(f"Haftanın en çok oy alan memesi: {top_meme_url}")
+        await ctx.send(f"Top rated meme of the week: {top_meme_url}")
     else:
-        await ctx.send("Henüz oy verilmiş meme yok.")
+        await ctx.send("No memes have been voted yet.")
 
 @bot.command(name='ClimateChange')
 async def climate_change(ctx: commands.Context):
     fact = random.choice(facts)
-    await ctx.send(f"Bunu biliyor muydunuz? {fact}")
+    await ctx.send(f"Did you know that? {fact}")
 
 @bot.command(name='helpbot')
 async def helpbot(ctx: commands.Context):
@@ -286,6 +391,10 @@ async def helpbot(ctx: commands.Context):
     - **Usage**: The <keyword> parameter specifies the keyword you want to search for.
     - **Example Usage**: !searchmm cat (This searches for a meme related to the keyword 'cat' and shares a random one.)
 
+    **!hobby [category]**
+    - **Description**: Fetches a random hobby from the Ninja API. The category is optional and defaults to 'general'.
+    - **Example Usage**: !hobby or !hobby outdoor
+
     **!helpbot**
     - **Description**: Provides a detailed list of all available commands and functions of the bot.
     - **Example Usage**: !helpbot
@@ -300,13 +409,18 @@ async def helpbot(ctx: commands.Context):
     - **Usage**: When you run the command, the bot shares a random meme about climate change from Imgur.
     - **Example Usage**: !CCMeme (You can run the command every 5 seconds.)
 
+    **!password <length>**
+    - **Description**: Generates a random password of the specified length using the Ninja API.
+    - **Usage**: The <length> parameter specifies the length of the password.
+    - **Example Usage**: !password 16 (This generates a 16-character password.)
+
     **Notes:**
     - For the !submitmeme command, make sure the submitted URL is in the correct format and accessible.
     - In the !vote command, the meme-id must correctly refer to the ID in the list of user-submitted memes.
     - Ensure that the announcement channel is correctly set using the !setchannel command.
     - The !CCMeme command can be run every 5 seconds; if used within that time frame again, the bot will notify you of how many seconds you need to wait.
     """
-  
+
     def split_message(message, max_length=2000):
         return [message[i:i+max_length] for i in range(0, len(message), max_length)]
 
@@ -319,9 +433,9 @@ async def ccmeme(ctx: commands.Context):
     memes = await get_climate_change_memes()
     if memes:
         meme_url = random.choice(memes)
-        await ctx.send(f"İklim değişikliği hakkında bir meme: {meme_url}")
+        await ctx.send(f"A meme about climate change: {meme_url}")
     else:
-        await ctx.send("İklim değişikliği memeleri alınırken bir hata oluştu veya hiç meme bulunamadı.")
+        await ctx.send("There was an error retrieving climate change memes or no memes were found.")
 
 @bot.command(name='searchmm')
 @commands.cooldown(1, 5, commands.BucketType.user)
@@ -330,9 +444,9 @@ async def searchmm(ctx: commands.Context, *, keyword: str):
     memes = await fetch_memes(url)
     if memes:
         meme_url = random.choice(memes)
-        await ctx.send(f"İşte aramanız için rastgele bir meme: {meme_url}")
+        await ctx.send(f"Here's a random meme for you to search: {meme_url}")
     else:
-        await ctx.send(f"'{keyword}' için meme bulunamadı.")
+        await ctx.send(f"'{keyword}' No memes found for.")
 
 @tasks.loop(hours=168)
 async def announce_top_meme():
@@ -341,7 +455,7 @@ async def announce_top_meme():
         if announcement_channel_id:
             channel = bot.get_channel(announcement_channel_id)
             if channel:
-                await channel.send(f"Haftanın en çok oy alan memesi: {top_meme_url}")
+                await channel.send(f"Most voted meme of the week: {top_meme_url}")
         votes.clear()
         save_data({'user_memes': user_memes, 'votes': votes})
 
@@ -349,6 +463,6 @@ async def announce_top_meme():
 async def set_channel(ctx: commands.Context, channel: discord.TextChannel):
     global announcement_channel_id
     announcement_channel_id = channel.id
-    await ctx.send(f"Duyuru kanalı olarak {channel.mention} ayarlandı.")
+    await ctx.send(f"As an announcement channel {channel.mention} is set.")
 
 bot.run('')
