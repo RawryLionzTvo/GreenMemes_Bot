@@ -1,101 +1,100 @@
-# Meme Bot
+# Discord Meme and Utility Bot
 
-Meme Bot is a Discord bot designed to share memes, allow users to submit and vote on memes, and provide random climate change facts. It also fetches memes from Imgur based on specified categories and keywords.
+This is a versatile Discord bot written in Python using the `discord.py` library. The bot provides various fun and utility commands, such as fetching random memes, generating passwords, retrieving IP information, and more. It also includes commands that fetch interesting facts and random hobbies using external APIs.
 
 ## Features
 
-- Fetch and share random memes from Imgur.
-- Allow users to submit their own memes.
-- Voting system for user-submitted memes.
-- Announcement of the most voted meme every week.
-- Share random facts about climate change.
-- Fetch memes based on specific keywords.
-- Commands to interact with the bot easily.
+- **Meme Commands:**
+  - `!meme [category]`: Fetches a random meme. If a category is specified, a meme from that category is shared.
+  - `!addmeme <category> <meme-url>`: Adds a meme to a specified category.
+  - `!submitmeme <meme-url>`: Submits a meme for voting.
+  - `!my_memes`: Lists the memes submitted by the user.
+  - `!vote <meme-id>`: Votes for a submitted meme.
+  - `!topmeme`: Displays the most voted meme of the week.
+  - `!CCMeme`: Shares a random meme about climate change.
 
-## Commands
+- **Utility Commands:**
+  - `!ip <ip-address>`: Retrieves geographic and network information for a given IP address.
+  - `!password <length>`: Generates a random password of the specified length.
+  - `!hobby [category]`: Fetches a random hobby suggestion.
+  - `!fact [limit]`: Fetches random facts (default limit is 3).
 
-### General Commands
+- **Informational Commands:**
+  - `!ClimateChange`: Shares a random fact about the environment and climate change.
+  - `!helpbot`: Provides a list of all available commands.
 
-- `!hi`: The bot will greet you.
-- `!helpbot`: Provides a detailed list of all available commands and how to use them.
-
-### Meme Commands
-
-- `!meme [category]`: Shares a random meme. If a category is specified, it fetches memes from that category.
-- `!addmeme <category> <meme-url>`: Adds a meme to a specified category.
-- `!submitmeme <meme-url>`: Allows users to submit their own meme. The meme is then added to the voting system.
-- `!my_memes`: Lists all memes submitted by the user.
-- `!vote <meme-id>`: Vote for a specific meme by its ID.
-- `!topmeme`: Shows the most voted meme of the week.
-- `!searchmm <keyword>`: Searches for memes on Imgur based on the specified keyword.
-
-### Climate Change Commands
-
-- `!ClimateChange`: Shares a random fact about climate change.
-- `!CCMeme`: Shares a random meme related to climate change.
-
-### Admin Commands
-
-- `!setchannel <channel>`: Sets the channel where the most voted meme of the week will be announced.
+- **Configuration Commands:**
+  - `!setchannel <channel>`: Sets the channel where the most voted meme of the week will be announced.
 
 ## Installation
 
 ### Prerequisites
 
-- Python 3.8+
-- Discord.py
-- A Discord bot token
-- Imgur Client ID
+- Python 3.8 or higher.
+- A Discord account and a bot token.
+- API keys for Imgur and API Ninjas.
 
 ### Setup
 
-1. Clone the repository:
-
-    ```bash
-    git clone https://github.com/yourusername/memebot.git
-    cd memebot
-    ```
-
-2. Install the required Python packages:
+1. Clone the repository or download the bot code.
+2. Install the required Python packages using the following command:
 
     ```bash
     pip install -r requirements.txt
     ```
 
-3. Add your Discord bot token and Imgur Client ID:
+3. Create a file named `.env` (optional) or edit the script to include your bot token and API keys:
 
-    - Open the bot script and replace `YOUR_DISCORD_BOT_TOKEN` with your actual Discord bot token.
-    - Replace `IMGUR_CLIENT_ID` with your Imgur Client ID.
+    ```bash
+    DISCORD_BOT_TOKEN=your_discord_bot_token
+    IMGUR_CLIENT_ID=your_imgur_client_id
+    API_NINJAS_KEY=your_api_ninjas_key
+    ```
 
-4. Run the bot:
+4. Run the bot using:
 
     ```bash
     python bot.py
     ```
 
-### Running the Bot
+## Configuration
 
-- Make sure you have the bot's token and other configurations set up correctly.
-- Run the bot using the command:
+- **Logging**: The bot is configured to log information using Python's built-in `logging` module.
+- **Persistent Storage**: The bot stores user-submitted memes and votes in a JSON file (`bot_data.json`) for persistent storage.
 
-    ```bash
-    python bot.py
-    ```
+## Usage
 
-## Persistent Storage
+Invite the bot to your Discord server and use the following commands:
 
-- The bot uses a JSON file (`bot_data.json`) for persistent storage to save user-submitted memes and votes.
-- Ensure that this file is available and writable in the bot's working directory.
+- **General Commands:**
+  - `!hi`: Greet the bot.
+  - `!helpbot`: Get a list of available commands.
 
-## Logging
+- **Meme Commands:**
+  - `!meme [category]`: Fetch a random meme. Specify a category to narrow the selection.
+  - `!addmeme <category> <meme-url>`: Add a meme to a specified category.
+  - `!submitmeme <meme-url>`: Submit a meme for community voting.
+  - `!my_memes`: View the memes you've submitted.
+  - `!vote <meme-id>`: Vote for a specific meme.
+  - `!topmeme`: View the top-voted meme of the week.
 
-- The bot is configured with basic logging to help track its activities and troubleshoot issues.
-- Logs are displayed in the console.
+- **Utility Commands:**
+  - `!ip <ip-address>`: Look up information about an IP address.
+  - `!password <length>`: Generate a random password.
+  - `!hobby [category]`: Get a random hobby suggestion.
+  - `!fact [limit]`: Retrieve random facts.
+
+- **Informational Commands:**
+  - `!ClimateChange`: Learn a random climate change fact.
+  - `!CCMeme`: Get a random climate change meme.
+
+- **Configuration Commands:**
+  - `!setchannel <channel>`: Set the announcement channel for the top meme.
 
 ## Contributing
 
-Contributions are welcome! If you have suggestions or improvements, feel free to create an issue or submit a pull request.
+Contributions are welcome! Please feel free to submit a pull request or open an issue on GitHub.
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
