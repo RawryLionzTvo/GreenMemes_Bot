@@ -1,7 +1,9 @@
+import asyncio
+import aiohttp
 import discord
 from discord.ext import commands, tasks
 import random
-import aiohttp
+import requests
 import logging
 import json
 import os
@@ -206,11 +208,11 @@ async def get_hobby(category: str = 'general') -> str:
         async with session.get(url, headers=headers) as response:
             if response.status == 200:
                 data = await response.json()
-                if data and isinstance(data, list):
+                if isinstance(data, list) and data:
                     random_entry = random.choice(data)
-                    if isinstance(random_entry, dict) and 'hobby' in random_entry:
-                        return random_entry.get('hobby', 'No hobby found.')
-                return "❗ Invalid data structure received."
+                    return random_entry.get('hobby', 'No hobby found.')
+                else:
+                    return "❗ No hobbies found in the response."
             else:
                 return f"❗ Error: {response.status} - {response.reason}"
 
@@ -361,26 +363,30 @@ async def bot_help(ctx: commands.Context):
     help_text = """
     **Available Commands:**
 
-    👋 **!hi** - Want to say hi?
-    🤣 **!meme [category]** - Shares a random meme. Optionally specify a category.
-    📝 **!addmeme <meme-url>** - Adds a meme to the collection.
-    🗳️ **!submitmeme <meme-url>** - Submit your meme for voting.
-    📸 **!my_memes** - List memes you've submitted.
-    👍 **!memevote <user-id> <vote>** - Vote for a meme by user ID.
-    🏆 **!topmeme** - Shows the top voted meme.
-    🌍 **!ClimateChange** - Shares a random climate change fact.
-    🔑 **!password <length>** - Generates a random password.
-    🎨 **!hobby [category]** - Suggests a hobby.
+    👋 **!hi** - Say hello to the bot.
+    🤣 **!meme [category]** - Get a random meme. Optionally specify a category to filter.
+    📝 **!addmeme <meme-url>** - Add a meme to the bot's collection.
+    🗳️ **!submitmeme <meme-url>** - Submit a meme for voting.
+    📸 **!my_memes** - View the memes you've submitted.
+    👍 **!memevote <user-id> <vote>** - Vote for a user's meme. The vote should be a positive or negative integer.
+    🏆 **!topmeme** - View the most voted meme.
+    🌍 **!ClimateChange** - Get a random climate change fact.
+    🔍 **!searchmm <keyword>** - Search for memes on Imgur by keyword.
+    🔑 **!password <length>** - Generate a random password with the specified length (1-128).
+    🎨 **!hobby [category]** - Get a random hobby suggestion. Optionally specify a category.
     🌍 **!ip <ip-address>** - Look up information about an IP address.
-    🔍 **!searchmm <keyword>** - Searches for memes on Imgur based on a keyword.
+    🖼️ **!CCMeme** - Get a random climate change meme from Imgur.
+    📚 **!fact [limit]** - Get random facts. Specify the number of facts (1-10).
+    🌦️ **!weather <location>** - Get the current weather for a specified location.
+    🧠 **!trivia [category]** - Get a random trivia question. Optionally specify a category.
     🔄 **!resetvotes** - Reset all meme votes (admin only).
     🔄 **!resetdata** - Reset all user data and votes (admin only).
     📢 **!setannouncementchannel** - Set the channel for meme announcements (admin only).
-    🏆 **!leaderboard** - Shows the top 5 users with the most votes.
-    💬 **!feedback <message>** - Send feedback to the bot's feedback channel.
     👋 **!welcome** - Set the welcome channel (admin only).
     👋 **!goodbye** - Set the goodbye channel (admin only).
-    ❓ **!bot_help** - Shows this help message.
+    💬 **!setfeedback** - Set the feedback channel (admin only).
+    🏆 **!leaderboard** - Show the top 5 users with the most votes.
+    ❓ **!bot_help** - Show this help message. 
     """
     await ctx.send(help_text)
 
@@ -390,24 +396,29 @@ async def helpbot(ctx: commands.Context):
     **Available Commands:**
 
     👋 **!hi** - Say hello to the bot.
-    🤣 **!meme [category]** - Get a random meme. Specify a category to filter.
+    🤣 **!meme [category]** - Get a random meme. Optionally specify a category to filter.
     📝 **!addmeme <meme-url>** - Add a meme to the bot's collection.
     🗳️ **!submitmeme <meme-url>** - Submit a meme for voting.
     📸 **!my_memes** - View the memes you've submitted.
-    👍 **!memevote <user-id> <vote>** - Vote for a user's meme.
+    👍 **!memevote <user-id> <vote>** - Vote for a user's meme. The vote should be a positive or negative integer.
     🏆 **!topmeme** - View the most voted meme.
     🌍 **!ClimateChange** - Get a random climate change fact.
     🔍 **!searchmm <keyword>** - Search for memes on Imgur by keyword.
-    🎨 **!hobby [category]** - Get a random hobby suggestion.
-    🔑 **!password <length>** - Generate a random password.
-    🌍 **!CCMeme** - Get a random climate change meme.
-    📢 **!setannouncementchannel** - Set the channel for meme announcements (admin only).
+    🔑 **!password <length>** - Generate a random password with the specified length (1-128).
+    🎨 **!hobby [category]** - Get a random hobby suggestion. Optionally specify a category.
+    🌍 **!ip <ip-address>** - Look up information about an IP address.
+    🖼️ **!CCMeme** - Get a random climate change meme from Imgur.
+    📚 **!fact [limit]** - Get random facts. Specify the number of facts (1-10).
+    🌦️ **!weather <location>** - Get the current weather for a specified location.
+    🧠 **!trivia [category]** - Get a random trivia question. Optionally specify a category.
     🔄 **!resetvotes** - Reset all meme votes (admin only).
     🔄 **!resetdata** - Reset all user data and votes (admin only).
+    📢 **!setannouncementchannel** - Set the channel for meme announcements (admin only).
     👋 **!welcome** - Set the welcome channel (admin only).
     👋 **!goodbye** - Set the goodbye channel (admin only).
-    💬 **!feedback** - Set the feedback channel (admin only).
-    ❓ **!helpbot** - Show this help message.
+    💬 **!setfeedback** - Set the feedback channel (admin only).
+    🏆 **!leaderboard** - Show the top 5 users with the most votes.
+    ❓ **!bot_help** - Show this help message.
     """
     await ctx.send(help_text)
 
@@ -420,6 +431,80 @@ async def ccmeme(ctx: commands.Context):
         await ctx.send(f"🌍 **A meme about climate change:** {meme_url}")
     else:
         await ctx.send("❗ There was an error retrieving climate change memes or no memes were found.")
+
+def get_weather(city: str) -> str:
+    api_key = os.getenv('WEATHER_API_KEY')
+    url = f'http://api.weatherapi.com/v1/current.json?key={api_key}&q={city}'
+    
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+        return (f"🌡️ **Weather in {city}:**\n"
+                f"Temperature: {data['current']['temp_c']}°C\n"
+                f"Condition: {data['current']['condition']['text']}")
+    except requests.RequestException as e:
+        return f"❗ An error occurred while receiving weather data: {e}"
+
+@bot.command(name='weather')
+async def weather(ctx: commands.Context, *, city: str):
+    weather_info = get_weather(city)
+    await ctx.send(weather_info)
+
+@bot.command(name='trivia')
+async def trivia(ctx: commands.Context):
+    trivia_data = {
+        "What is the capital of France? 🇫🇷": "Paris",
+        "What is the largest planet in our solar system? 🌌": "Jupiter",
+        "Who wrote 'To Kill a Mockingbird'? 📚": "Harper Lee",
+        "What is the chemical symbol for gold? 🏅": "Au",
+        "In what year did the Titanic sink? 🚢": "1912",
+        "What is the hardest natural substance on Earth? 💎": "Diamond",
+        "Who painted the Mona Lisa? 🎨": "Leonardo da Vinci",
+        "What is the smallest country in the world? 🌍": "Vatican City",
+        "What element does 'O' represent on the periodic table? 🧪": "Oxygen",
+        "What planet is known as the Red Planet? 🔴": "Mars",
+        "Who is known as the father of modern physics? 👨‍🔬": "Albert Einstein",
+        "Which ocean is the largest? 🌊": "Pacific Ocean",
+        "What is the tallest mountain in the world? ⛰️": "Mount Everest",
+        "In which city would you find the Colosseum? 🏛️": "Rome",
+        "What year did World War II end? 🌍": "1945",
+        "Which planet is closest to the Sun? ☀️": "Mercury",
+        "Who wrote '1984'? 📖": "George Orwell",
+        "What is the capital of Japan? 🇯🇵": "Tokyo",
+        "How many continents are there on Earth? 🌎": "Seven",
+        "What is the largest mammal in the world? 🐋": "Blue Whale",
+        "Who was the first person to walk on the moon? 🌕": "Neil Armstrong",
+        "What is the currency of the United Kingdom? 💷": "Pound Sterling",
+        "What is the name of the longest river in the world? 🌊": "Nile",
+        "Who developed the theory of relativity? 🧠": "Albert Einstein",
+        "What is the chemical symbol for water? 💧": "H2O",
+        "What is the main ingredient in guacamole? 🥑": "Avocado",
+        "Which country is known as the Land of the Rising Sun? 🌅": "Japan",
+        "Who painted 'Starry Night'? 🌟": "Vincent van Gogh"
+    }
+    
+    # Choose a random question
+    question, correct_answer = random.choice(list(trivia_data.items()))
+    
+    # Ask the question
+    await ctx.send(f"**📝 Question:** {question}\nReply with your answer!")
+
+    # Wait for the user's response
+    def check(m):
+        return m.author == ctx.author and m.channel == ctx.channel
+
+    try:
+        msg = await bot.wait_for('message', timeout=30.0, check=check)
+        user_answer = msg.content.strip()
+        
+        if user_answer.lower() == correct_answer.lower():
+            await ctx.send(f"**✅ Correct!** The answer to \"{question}\" is indeed {correct_answer}.")
+        else:
+            await ctx.send(f"**❌ Wrong!** The correct answer to \"{question}\" is {correct_answer}.")
+    
+    except asyncio.TimeoutError:
+        await ctx.send("**⏳ Time's up!** You took too long to answer.")
 
 @bot.command(name='searchmm')
 @commands.cooldown(1, 5, commands.BucketType.user)
@@ -490,11 +575,13 @@ async def on_command_error(ctx, error):
         await ctx.send("❗ Missing required argument. Please check the command and try again.")
     elif isinstance(error, commands.BadArgument):
         await ctx.send("❗ Invalid argument provided. Please check the command and try again.")
+    elif isinstance(error, commands.CommandNotFound):
+        await ctx.send("❗ Command not found. Use !bot_help to see a list of available commands.")
     elif isinstance(error, commands.CheckFailure):
-        await ctx.send("❗ You don't have permission to use this command.")
+        await ctx.send("❗ You do not have permission to use this command.")
     else:
-        await ctx.send("❗ An error occurred while processing your command.")
-        logger.error(f"An error occurred: {error}")
+        await ctx.send(f"❗ An unexpected error occurred: {str(error)}")
+        logger.error(f"Unhandled error: {error}")
 
 @bot.command(name='leaderboard')
 async def leaderboard(ctx: commands.Context):
