@@ -246,18 +246,37 @@ async def hobby(ctx: commands.Context):
     )
     await ctx.send(response)
 
-async def get_random_facts(limit: int = 3) -> List[str]:
-    url = f'https://api.api-ninjas.com/v1/facts?limit={limit}'
+async def get_random_facts() -> List[str]:
+    url = 'https://api.api-ninjas.com/v1/facts'
     headers = {'X-Api-Key': API_NINJAS_KEY}
     
     async with aiohttp.ClientSession() as session:
-        async with session.get(url, headers=headers) as response:
-            if response.status == 200:
-                data = await response.json()
-                return [fact['fact'] for fact in data]
-            else:
-                logger.error(f"Error fetching facts: {response.status} - {response.reason}")
-                return []
+        try:
+            async with session.get(url, headers=headers) as response:
+                logger.info(f"Response Status Code: {response.status}")
+                response_text = await response.text()
+                logger.info(f"Response Text: {response_text}")
+
+                if response.status == 200:
+                    try:
+                        data = await response.json()
+                        if isinstance(data, list):
+                            return [fact['fact'] for fact in data if 'fact' in fact][:3]  # Fixed number of facts
+                        else:
+                            logger.warning("Unexpected response format, data is not a list.")
+                            return []
+                    except json.JSONDecodeError as e:
+                        logger.error(f"JSON Decode Error: {e}")
+                        return []
+                else:
+                    logger.error(f"API Error: {response.status} - {response.reason}")
+                    return []
+        except aiohttp.ClientResponseError as e:
+            logger.error(f'HTTP error occurred: {e.status} - {e.message}')
+            return []
+        except Exception as e:
+            logger.error(f'An unexpected error occurred: {e}')
+            return []
 
 @bot.command(name='fact')
 @commands.cooldown(1, 5, commands.BucketType.user)
@@ -266,9 +285,10 @@ async def fact(ctx: commands.Context, limit: int = 3):
         await ctx.send("❗ Please enter a limit between 1 and 10.")
         return
 
-    facts = await get_random_facts(limit)
+    facts = await get_random_facts()
     if facts:
-        for fact in facts:
+        # Apply the limit here by slicing the facts list
+        for fact in facts[:limit]:
             await ctx.send(f"📚 **Fact:** {fact}")
     else:
         await ctx.send("❗ Sorry, I couldn't retrieve any facts right now.")
