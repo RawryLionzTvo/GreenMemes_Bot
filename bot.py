@@ -8,7 +8,7 @@ import logging
 import json
 import os
 from dotenv import load_dotenv
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 load_dotenv()
 
@@ -200,26 +200,51 @@ async def password_generator(ctx: commands.Context, length: int):
     password = await generate_password(length)
     await ctx.send(f"🔑 **Generated Password:** `{password}`")
 
-async def get_hobby(category: str = 'general') -> str:
-    url = f'https://api.api-ninjas.com/v1/hobbies?category={category}'
+# Function to fetch hobbies asynchronously
+async def fetch_hobbies(url: str) -> Dict[str, Optional[str]]:
     headers = {'X-Api-Key': API_NINJAS_KEY}
-    
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=headers) as response:
             if response.status == 200:
                 data = await response.json()
-                if isinstance(data, list) and data:
-                    random_entry = random.choice(data)
-                    return random_entry.get('hobby', 'No hobby found.')
+                if isinstance(data, dict):  # Check if the response is a dictionary
+                    return data
                 else:
-                    return "❗ No hobbies found in the response."
+                    logger.warning("Unexpected response format.")
+                    return {}
             else:
-                return f"❗ Error: {response.status} - {response.reason}"
+                logger.error(f"Failed to fetch data. Status code: {response.status}")
+                return {}
+            
+async def get_hobby() -> Dict[str, str]:
+    url = "https://api.api-ninjas.com/v1/hobbies?category=general"
+    data = await fetch_hobbies(url)
+    
+    # Assuming the API response includes these fields
+    hobby = data.get('hobby', 'No hobby found')
+    category = data.get('category', 'No category found')
+    link = data.get('link', 'No link available')
+    
+    return {
+        'hobby': hobby,
+        'category': category,
+        'link': link
+    }
 
+# Command to fetch and display a hobby
 @bot.command(name='hobby')
-async def hobby(ctx: commands.Context, category: str = 'general'):
-    hobby = await get_hobby(category)
-    await ctx.send(f"🎨 **Here's a hobby you might enjoy:** {hobby}")
+async def hobby(ctx: commands.Context):
+    hobby_info = await get_hobby()
+    hobby = hobby_info.get('hobby', 'No hobby found')
+    category = hobby_info.get('category', 'No category found')
+    link = hobby_info.get('link', 'No link available')
+
+    response = (
+        f"🎨 **Here's a hobby you might enjoy:** {hobby}\n"
+        f"📂 **Category:** {category}\n"
+        f"🔗 **Learn more:** {link}"
+    )
+    await ctx.send(response)
 
 async def get_random_facts(limit: int = 3) -> List[str]:
     url = f'https://api.api-ninjas.com/v1/facts?limit={limit}'
@@ -481,9 +506,22 @@ async def trivia(ctx: commands.Context):
         "What is the chemical symbol for water? 💧": "H2O",
         "What is the main ingredient in guacamole? 🥑": "Avocado",
         "Which country is known as the Land of the Rising Sun? 🌅": "Japan",
-        "Who painted 'Starry Night'? 🌟": "Vincent van Gogh"
+        "Who painted 'Starry Night'? 🌟": "Vincent van Gogh",
+        "What is the most abundant gas in Earth's atmosphere? 🌬️": "Nitrogen",
+        "What is the smallest planet in our solar system? 🪐": "Mercury",
+        "Who discovered penicillin? 💉": "Alexander Fleming",
+        "What is the name of the galaxy that contains our solar system? 🌌": "Milky Way",
+        "What is the capital city of Australia? 🐨": "Canberra",
+        "What is the symbol for potassium on the periodic table? 🧪": "K",
+        "What is the name of the phobia that involves an intense fear of spiders? 🕷️": "Arachnophobia",
+        "Which element is represented by the symbol 'Fe'? 🧪": "Iron",
+        "What fruit is known as the 'king of fruits' and has a strong odor? 🍍": "Durian",
+        "What is the chemical formula for table salt? 🧂": "NaCl",
+        "What is the name of the famous clock tower in London? ⏰": "Big Ben",
+        "What is the hardest natural substance found in the human body? 💪": "Tooth enamel",
+        "Who invented the light bulb? 💡": "Thomas Edison"
     }
-    
+
     # Choose a random question
     question, correct_answer = random.choice(list(trivia_data.items()))
     
