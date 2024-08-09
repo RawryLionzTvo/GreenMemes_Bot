@@ -1,100 +1,98 @@
-# Discord Meme and Utility Bot
+# MemeBot
 
-This is a versatile Discord bot written in Python using the `discord.py` library. The bot provides various fun and utility commands, such as fetching random memes, generating passwords, retrieving IP information, and more. It also includes commands that fetch interesting facts and random hobbies using external APIs.
+MemeBot is a versatile and interactive Discord bot designed to bring fun and utility to your server. It offers a range of features, including meme sharing, random fact generation, IP lookup, hobby suggestions, and more.
 
 ## Features
 
-- **Meme Commands:**
-  - `!meme [category]`: Fetches a random meme. If a category is specified, a meme from that category is shared.
-  - `!addmeme <category> <meme-url>`: Adds a meme to a specified category.
+- **Meme Commands**
+  - `!meme [category]`: Fetches a random meme. Optionally specify a category.
+  - `!addmeme <meme-url>`: Adds a meme to the bot's collection.
   - `!submitmeme <meme-url>`: Submits a meme for voting.
-  - `!my_memes`: Lists the memes submitted by the user.
-  - `!vote <meme-id>`: Votes for a submitted meme.
-  - `!topmeme`: Displays the most voted meme of the week.
-  - `!CCMeme`: Shares a random meme about climate change.
+  - `!my_memes`: Lists memes you have submitted.
+  - `!memevote <user-id> <vote>`: Votes for a meme by a specific user.
+  - `!topmeme`: Displays the top-voted meme.
+  - `!CCMeme`: Fetches a random climate change meme.
+  - `!searchmm <keyword>`: Searches for memes on Imgur using a keyword.
 
-- **Utility Commands:**
-  - `!ip <ip-address>`: Retrieves geographic and network information for a given IP address.
-  - `!password <length>`: Generates a random password of the specified length.
-  - `!hobby [category]`: Fetches a random hobby suggestion.
-  - `!fact [limit]`: Fetches random facts (default limit is 3).
+- **Informational Commands**
+  - `!ip <ip-address>`: Provides information about an IP address.
+  - `!fact [limit]`: Retrieves random facts (limit between 1-10).
+  - `!hobby [category]`: Suggests a hobby based on the given category.
+  - `!password <length>`: Generates a random password.
+  - `!ClimateChange`: Shares a random climate change fact.
 
-- **Informational Commands:**
-  - `!ClimateChange`: Shares a random fact about the environment and climate change.
-  - `!helpbot`: Provides a list of all available commands.
+- **Server Management**
+  - `!welcome`: Sets the welcome channel (admin only).
+  - `!goodbye`: Sets the goodbye channel (admin only).
+  - `!feedback <message>`: Sends feedback to the bot's feedback channel.
+  - `!setannouncementchannel`: Sets the channel for meme announcements (admin only).
+  - `!resetvotes`: Resets all meme votes (admin only).
+  - `!resetdata`: Resets all user data and votes (admin only).
+  - `!leaderboard`: Displays the top 5 users with the most votes.
 
-- **Configuration Commands:**
-  - `!setchannel <channel>`: Sets the channel where the most voted meme of the week will be announced.
-
-## Installation
+## Setup
 
 ### Prerequisites
 
-- Python 3.8 or higher.
-- A Discord account and a bot token.
-- API keys for Imgur and API Ninjas.
+- Python 3.8 or higher
+- A Discord bot token
+- API keys for [Imgur](https://api.imgur.com/) and [API Ninjas](https://api-ninjas.com/)
 
-### Setup
+### Installation
 
-1. Clone the repository or download the bot code.
-2. Install the required Python packages using the following command:
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/yourusername/MemeBot.git
+   cd MemeBot
 
-    ```bash
-    pip install -r requirements.txt
-    ```
+2. **Install the required packages:**
+   ```bash
+   pip install -r requirements.txt
 
-3. Create a file named `.env` (optional) or edit the script to include your bot token and API keys:
+3. **Create a `.env` file in the root directory and add your API keys:**
+   ```env
+   IMGUR_CLIENT_ID=your_imgur_client_id
+   API_NINJAS_KEY=your_api_ninjas_key
+   BOT_TOKEN=your_discord_bot_token
 
-    ```bash
-    DISCORD_BOT_TOKEN=your_discord_bot_token
-    IMGUR_CLIENT_ID=your_imgur_client_id
-    API_NINJAS_KEY=your_api_ninjas_key
-    ```
+4. **Run the bot:**
+   ```bash
+   python bot.py
 
-4. Run the bot using:
+## Commands Overview
 
-    ```bash
-    python bot.py
-    ```
-
-## Configuration
-
-- **Logging**: The bot is configured to log information using Python's built-in `logging` module.
-- **Persistent Storage**: The bot stores user-submitted memes and votes in a JSON file (`bot_data.json`) for persistent storage.
-
-## Usage
-
-Invite the bot to your Discord server and use the following commands:
-
-- **General Commands:**
-  - `!hi`: Greet the bot.
-  - `!helpbot`: Get a list of available commands.
-
-- **Meme Commands:**
-  - `!meme [category]`: Fetch a random meme. Specify a category to narrow the selection.
-  - `!addmeme <category> <meme-url>`: Add a meme to a specified category.
-  - `!submitmeme <meme-url>`: Submit a meme for community voting.
-  - `!my_memes`: View the memes you've submitted.
-  - `!vote <meme-id>`: Vote for a specific meme.
-  - `!topmeme`: View the top-voted meme of the week.
-
-- **Utility Commands:**
-  - `!ip <ip-address>`: Look up information about an IP address.
-  - `!password <length>`: Generate a random password.
-  - `!hobby [category]`: Get a random hobby suggestion.
-  - `!fact [limit]`: Retrieve random facts.
-
-- **Informational Commands:**
-  - `!ClimateChange`: Learn a random climate change fact.
-  - `!CCMeme`: Get a random climate change meme.
-
-- **Configuration Commands:**
-  - `!setchannel <channel>`: Set the announcement channel for the top meme.
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a pull request or open an issue on GitHub.
+| Command | Description |
+|---------|-------------|
+| `!hi` | Say hello to the bot. |
+| `!meme [category]` | Fetch a random meme, optionally filtered by category. |
+| `!addmeme <meme-url>` | Add a meme to the bot's collection. |
+| `!submitmeme <meme-url>` | Submit a meme for voting. |
+| `!my_memes` | View the memes you have submitted. |
+| `!memevote <user-id> <vote>` | Vote for a user's meme. |
+| `!topmeme` | View the most voted meme. |
+| `!CCMeme` | Get a random climate change meme. |
+| `!searchmm <keyword>` | Search for memes on Imgur by keyword. |
+| `!ip <ip-address>` | Look up IP information. |
+| `!fact [limit]` | Get random facts (limit 1-10). |
+| `!hobby [category]` | Get a hobby suggestion. |
+| `!password <length>` | Generate a random password. |
+| `!ClimateChange` | Get a random climate change fact. |
+| `!welcome` | Set the welcome channel (admin only). |
+| `!goodbye` | Set the goodbye channel (admin only). |
+| `!feedback <message>` | Send feedback to the bot's feedback channel. |
+| `!setannouncementchannel` | Set the announcement channel (admin only). |
+| `!resetvotes` | Reset all meme votes (admin only). |
+| `!resetdata` | Reset all user data and votes (admin only). |
+| `!leaderboard` | Display the top 5 users with the most votes. |
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+### Instructions for Use:
+- **Copy the text above** and paste it into a new file named `README.md` in your project's root directory.
+- Ensure to replace placeholders like `yourusername` in the installation section with your actual GitHub username if applicable.
+
+### Next Steps:
+**a.** Create a `requirements.txt` file with all the dependencies listed.  
+**b.** Add unit tests for key functions to ensure code reliability.
