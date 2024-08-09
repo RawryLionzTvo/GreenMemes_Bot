@@ -20,6 +20,8 @@ MemeBot is a versatile and interactive Discord bot designed to bring fun and uti
   - `!hobby [category]`: Suggests a hobby based on the given category.
   - `!password <length>`: Generates a random password.
   - `!ClimateChange`: Shares a random climate change fact.
+  - `!weather <location>`: Provides current weather information for a specified location.
+  - `!trivia [category]`: Retrieves a random trivia question. Optionally specify a category.
 
 - **Server Management**
   - `!welcome`: Sets the welcome channel (admin only).
@@ -36,13 +38,13 @@ MemeBot is a versatile and interactive Discord bot designed to bring fun and uti
 
 - Python 3.8 or higher
 - A Discord bot token
-- API keys for [Imgur](https://api.imgur.com/) and [API Ninjas](https://api-ninjas.com/)
+- API keys for [Imgur](https://api.imgur.com/), [API Ninjas](https://api-ninjas.com/), and [Weather API](https://www.weatherapi.com/)
 
 ### Installation
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/yourusername/MemeBot.git
+   git clone https://github.com/RawryLionzTvo/GreenMemes_Bot.git
    cd MemeBot
 
 2. **Install the required packages:**
@@ -52,38 +54,43 @@ MemeBot is a versatile and interactive Discord bot designed to bring fun and uti
 3. **Create a `.env` file in the root directory and add your API keys:**
    ```env
    IMGUR_CLIENT_ID=your_imgur_client_id
-   API_NINJAS_KEY=your_api_ninjas_key
-   BOT_TOKEN=your_discord_bot_token
+    API_NINJAS_KEY=your_api_ninjas_key
+    WEATHER_API_KEY=your_weather_api_key
+    BOT_TOKEN=your_discord_bot_token
 
 4. **Run the bot:**
    ```bash
    python bot.py
 
-## Commands Overview
+## Command Overview
 
-| Command | Description |
-|---------|-------------|
-| `!hi` | Say hello to the bot. |
-| `!meme [category]` | Fetch a random meme, optionally filtered by category. |
-| `!addmeme <meme-url>` | Add a meme to the bot's collection. |
-| `!submitmeme <meme-url>` | Submit a meme for voting. |
-| `!my_memes` | View the memes you have submitted. |
-| `!memevote <user-id> <vote>` | Vote for a user's meme. |
-| `!topmeme` | View the most voted meme. |
-| `!CCMeme` | Get a random climate change meme. |
-| `!searchmm <keyword>` | Search for memes on Imgur by keyword. |
-| `!ip <ip-address>` | Look up IP information. |
-| `!fact [limit]` | Get random facts (limit 1-10). |
-| `!hobby [category]` | Get a hobby suggestion. |
-| `!password <length>` | Generate a random password. |
-| `!ClimateChange` | Get a random climate change fact. |
-| `!welcome` | Set the welcome channel (admin only). |
-| `!goodbye` | Set the goodbye channel (admin only). |
-| `!feedback <message>` | Send feedback to the bot's feedback channel. |
-| `!setannouncementchannel` | Set the announcement channel (admin only). |
-| `!resetvotes` | Reset all meme votes (admin only). |
-| `!resetdata` | Reset all user data and votes (admin only). |
-| `!leaderboard` | Display the top 5 users with the most votes. |
+| Command                | Description                                                                                      |
+|------------------------|--------------------------------------------------------------------------------------------------|
+| `!hi`                  | Say hello to the bot.                                                                           |
+| `!meme [category]`     | Fetch a random meme. Optionally specify a category to filter.                                   |
+| `!addmeme <meme-url>`  | Add a meme to the bot's collection.                                                              |
+| `!submitmeme <meme-url>` | Submit a meme for voting.                                                                       |
+| `!my_memes`            | View the memes you’ve submitted.                                                                 |
+| `!memevote <user-id> <vote>` | Vote for a user's meme. The vote should be a positive or negative integer.                  |
+| `!topmeme`             | View the most voted meme.                                                                        |
+| `!CCMeme`              | Get a random climate change meme from Imgur.                                                     |
+| `!searchmm <keyword>`  | Search for memes on Imgur using a keyword.                                                       |
+| `!ip <ip-address>`     | Look up information about an IP address.                                                         |
+| `!fact [limit]`        | Get random facts. Specify the number of facts (1-10).                                            |
+| `!hobby [category]`    | Get a random hobby suggestion. Optionally specify a category.                                    |
+| `!password <length>`   | Generate a random password with the specified length (1-128).                                    |
+| `!ClimateChange`       | Get a random climate change fact.                                                                |
+| `!weather <location>`  | Get the current weather for a specified location.                                                |
+| `!trivia [category]`   | Get a random trivia question. Optionally specify a category.                                      |
+| `!resetvotes`          | Reset all meme votes (admin only).                                                                |
+| `!resetdata`           | Reset all user data and votes (admin only).                                                       |
+| `!setannouncementchannel` | Set the channel for meme announcements (admin only).                                           |
+| `!welcome`             | Set the welcome channel (admin only).                                                             |
+| `!goodbye`             | Set the goodbye channel (admin only).                                                             |
+| `!setfeedback`         | Set the feedback channel (admin only).                                                           |
+| `!leaderboard`         | Show the top 5 users with the most votes.                                                        |
+| `!bot_help`            | Show the help message for bot commands.                                                           |
+
 
 ## License
 
