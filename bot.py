@@ -1,7 +1,9 @@
 import asyncio
 import aiohttp
 import discord
+from discord import Member, User, Role, Guild
 from discord.ext import commands, tasks
+from discord.ext.commands import has_permissions, MissingPermissions
 import random
 import requests
 import logging
@@ -12,7 +14,7 @@ from typing import List, Dict, Optional
 
 load_dotenv()
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)  # or INFO
 logger = logging.getLogger(__name__)
 
 intents = discord.Intents.default()
@@ -29,6 +31,9 @@ GOODBYE_CHANNEL_ID = None
 FEEDBACK_CHANNEL_ID = None
 
 headers = {'Authorization': f'Client-ID {IMGUR_CLIENT_ID}'}
+
+if not all([IMGUR_CLIENT_ID, API_NINJAS_KEY, BOT_TOKEN]):
+    raise ValueError("Required environment variables are missing.")
 
 DATA_FILE = 'bot_data.json'
 
@@ -296,12 +301,15 @@ async def fact(ctx: commands.Context, limit: int = 3):
 @bot.event
 async def on_ready():
     logger.info(f'✅ Logged in as {bot.user}')
-    logger.info('Bot is ready and running!')
-    announce_top_meme.start()
+    change_status.start()
 
-@bot.command(help="Say hello to the bot.")
+@bot.command(name='hi', aliases=['hello', 'hey'])
 async def hi(ctx):
     await ctx.send(f'👋 **Hello!**')
+
+@tasks.loop(minutes=30)
+async def change_status():
+    await bot.change_presence(activity=discord.Game(name="with memes"))
 
 @bot.event
 async def on_message(message):
@@ -329,6 +337,81 @@ async def my_stats(ctx: commands.Context):
     num_memes = len(user_memes.get(user_id, []))
     num_votes = votes.get(user_id, 0)
     await ctx.send(f"📊 **You have submitted {num_memes} memes and received {num_votes} votes.")
+
+# Ban Command
+@bot.command(name='ban')
+@has_permissions(ban_members=True)
+async def ban(ctx, member: Member, *, reason=None):
+    await member.ban(reason=reason)
+    await ctx.send(f"🚫 {member.mention} has been banned for: {reason}")
+
+@ban.error
+async def ban_error(ctx, error):
+    if isinstance(error, MissingPermissions):
+        await ctx.send("❗ You don't have permission to use this command.")
+    else:
+        await ctx.send(f"❗ An error occurred: {str(error)}")
+
+# Kick Command
+@bot.command(name='kick')
+@has_permissions(kick_members=True)
+async def kick(ctx, member: Member, *, reason=None):
+    await member.kick(reason=reason)
+    await ctx.send(f"👢 {member.mention} has been kicked for: {reason}")
+
+@kick.error
+async def kick_error(ctx, error):
+    if isinstance(error, MissingPermissions):
+        await ctx.send("❗ You don't have permission to use this command.")
+    else:
+        await ctx.send(f"❗ An error occurred: {str(error)}")
+
+# Mute Command
+@bot.command(name='mute')
+@has_permissions(manage_roles=True)
+async def mute(ctx, member: Member, minutes: int = 5, *, reason=None):
+    role = await ensure_muted_role(ctx.guild)
+    await member.add_roles(role, reason=reason)
+    await ctx.send(f"🔇 {member.mention} has been muted for {minutes} minutes for: {reason}")
+
+    await asyncio.sleep(minutes * 60)
+    await member.remove_roles(role)
+    await ctx.send(f"🔊 {member.mention}'s mute has been lifted.")
+
+@mute.error
+async def mute_error(ctx, error):
+    if isinstance(error, MissingPermissions):
+        await ctx.send("❗ You don't have permission to use this command.")
+    else:
+        await ctx.send(f"❗ An error occurred: {str(error)}")
+
+# Unmute Command
+@bot.command(name='unmute')
+@has_permissions(manage_roles=True)
+async def unmute(ctx, member: Member):
+    role = discord.utils.get(ctx.guild.roles, name='Muted')
+    if role in member.roles:
+        await member.remove_roles(role)
+        await ctx.send(f"🔊 {member.mention} has been unmuted.")
+    else:
+        await ctx.send(f"❗ {member.mention} is not muted.")
+
+# Function that automatically adds the "Muted" role
+async def ensure_muted_role(guild: Guild) -> Role:
+    role = discord.utils.get(guild.roles, name='Muted')
+    if not role:
+        # "Muted" rolü oluşturuluyor
+        role = await guild.create_role(name='Muted', reason="Mute komutu için otomatik oluşturuldu.")
+        for channel in guild.channels:
+            await channel.set_permissions(role, speak=False, send_messages=False, add_reactions=False)
+    return role
+
+@unmute.error
+async def unmute_error(ctx, error):
+    if isinstance(error, MissingPermissions):
+        await ctx.send("❗ You don't have permission to use this command.")
+    else:
+        await ctx.send(f"❗ An error occurred: {str(error)}")
 
 @bot.command(name='meme')
 @commands.cooldown(1, 5, commands.BucketType.user)
@@ -410,28 +493,32 @@ async def bot_help(ctx: commands.Context):
 
     👋 **!hi** - Say hello to the bot.
     🤣 **!meme [category]** - Get a random meme. Optionally specify a category to filter.
-    📝 **!addmeme <meme-url>** - Add a meme to the bot's collection.
-    🗳️ **!submitmeme <meme-url>** - Submit a meme for voting.
+    📝 **!addmeme [meme_url]** - Add a meme to the bot's collection.
+    🗳️ **!submitmeme [meme_url]** - Submit a meme for voting.
     📸 **!my_memes** - View the memes you've submitted.
-    👍 **!memevote <user-id> <vote>** - Vote for a user's meme. The vote should be a positive or negative integer.
+    👍 **!memevote [user_id] [vote]** - Vote for a user's meme. The vote should be a positive or negative integer.
     🏆 **!topmeme** - View the most voted meme.
     🌍 **!ClimateChange** - Get a random climate change fact.
-    🔍 **!searchmm <keyword>** - Search for memes on Imgur by keyword.
-    🔑 **!password <length>** - Generate a random password with the specified length (1-128).
+    🔍 **!searchmm [keyword]** - Search for memes on Imgur by keyword.
+    🔑 **!password [length]** - Generate a random password with the specified length (1-128).
     🎨 **!hobby [category]** - Get a random hobby suggestion. Optionally specify a category.
-    🌍 **!ip <ip-address>** - Look up information about an IP address.
+    🌍 **!ip [ip_addr]** - Look up information about an IP address.
     🖼️ **!CCMeme** - Get a random climate change meme from Imgur.
     📚 **!fact [limit]** - Get random facts. Specify the number of facts (1-10).
-    🌦️ **!weather <location>** - Get the current weather for a specified location.
+    🌦️ **!weather [city]** - Get the current weather for a specified location.
     🧠 **!trivia [category]** - Get a random trivia question. Optionally specify a category.
     🔄 **!resetvotes** - Reset all meme votes (admin only).
     🔄 **!resetdata** - Reset all user data and votes (admin only).
-    📢 **!setannouncementchannel** - Set the channel for meme announcements (admin only).
-    👋 **!welcome** - Set the welcome channel (admin only).
-    👋 **!goodbye** - Set the goodbye channel (admin only).
-    💬 **!setfeedback** - Set the feedback channel (admin only).
+    📢 **!setannouncementchannel [channel_id]** - Set the channel for meme announcements (admin only).
+    👋 **!welcome [channel_id]** - Set the welcome channel (admin only).
+    👋 **!goodbye [channel_id]** - Set the goodbye channel (admin only).
+    💬 **!setfeedback [channel_id]** - Set the feedback channel (admin only).
     🏆 **!leaderboard** - Show the top 5 users with the most votes.
-    ❓ **!bot_help** - Show this help message. 
+    🚫 **!ban [member] [reason]** - Ban a user from the server.
+    👢 **!kick [member] [reason]** - Kick a user from the server.
+    🔇 **!mute [member] [minutes] [reason]** - Mute a user for a specified number of minutes.
+    🔊 **!unmute [member]** - Unmute a user.
+    ❓ **!bot_help** - Show this help message.
     """
     await ctx.send(help_text)
 
@@ -442,28 +529,32 @@ async def helpbot(ctx: commands.Context):
 
     👋 **!hi** - Say hello to the bot.
     🤣 **!meme [category]** - Get a random meme. Optionally specify a category to filter.
-    📝 **!addmeme <meme-url>** - Add a meme to the bot's collection.
-    🗳️ **!submitmeme <meme-url>** - Submit a meme for voting.
+    📝 **!addmeme [meme_url]** - Add a meme to the bot's collection.
+    🗳️ **!submitmeme [meme_url]** - Submit a meme for voting.
     📸 **!my_memes** - View the memes you've submitted.
-    👍 **!memevote <user-id> <vote>** - Vote for a user's meme. The vote should be a positive or negative integer.
+    👍 **!memevote [user_id] [vote]** - Vote for a user's meme. The vote should be a positive or negative integer.
     🏆 **!topmeme** - View the most voted meme.
     🌍 **!ClimateChange** - Get a random climate change fact.
-    🔍 **!searchmm <keyword>** - Search for memes on Imgur by keyword.
-    🔑 **!password <length>** - Generate a random password with the specified length (1-128).
+    🔍 **!searchmm [keyword]** - Search for memes on Imgur by keyword.
+    🔑 **!password [length]** - Generate a random password with the specified length (1-128).
     🎨 **!hobby [category]** - Get a random hobby suggestion. Optionally specify a category.
-    🌍 **!ip <ip-address>** - Look up information about an IP address.
+    🌍 **!ip [ip_addr]** - Look up information about an IP address.
     🖼️ **!CCMeme** - Get a random climate change meme from Imgur.
     📚 **!fact [limit]** - Get random facts. Specify the number of facts (1-10).
-    🌦️ **!weather <location>** - Get the current weather for a specified location.
+    🌦️ **!weather [city]** - Get the current weather for a specified location.
     🧠 **!trivia [category]** - Get a random trivia question. Optionally specify a category.
     🔄 **!resetvotes** - Reset all meme votes (admin only).
     🔄 **!resetdata** - Reset all user data and votes (admin only).
-    📢 **!setannouncementchannel** - Set the channel for meme announcements (admin only).
-    👋 **!welcome** - Set the welcome channel (admin only).
-    👋 **!goodbye** - Set the goodbye channel (admin only).
-    💬 **!setfeedback** - Set the feedback channel (admin only).
+    📢 **!setannouncementchannel [channel_id]** - Set the channel for meme announcements (admin only).
+    👋 **!welcome [channel_id]** - Set the welcome channel (admin only).
+    👋 **!goodbye [channel_id]** - Set the goodbye channel (admin only).
+    💬 **!setfeedback [channel_id]** - Set the feedback channel (admin only).
     🏆 **!leaderboard** - Show the top 5 users with the most votes.
-    ❓ **!bot_help** - Show this help message.
+    🚫 **!ban [member] [reason]** - Ban a user from the server.
+    👢 **!kick [member] [reason]** - Kick a user from the server.
+    🔇 **!mute [member] [minutes] [reason]** - Mute a user for a specified number of minutes.
+    🔊 **!unmute [member]** - Unmute a user.
+    ❓ **!helpbot** - Show this help message.
     """
     await ctx.send(help_text)
 
